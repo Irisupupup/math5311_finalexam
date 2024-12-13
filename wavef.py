@@ -20,17 +20,7 @@ def stability_condition(dx, n):
 
 
 
-def central_difference_scheme(N, T, dt):
-    dx = 2 * np.pi / N
-    dy = 2 * np.pi / N
-
-    X = np.zeros((N + 1, N + 1))
-    Y = np.zeros((N + 1, N + 1))
-    for i in range(N + 1):
-        for j in range(N + 1):
-            X[i, j] = i * dx
-            Y[i, j] = j * dy
-
+def central_difference_scheme(X, Y, N, T, dt):
     u = np.zeros((N + 1, N + 1))
     u_prev = np.zeros((N + 1, N + 1))
     u_next = np.zeros((N + 1, N + 1))
@@ -44,7 +34,6 @@ def central_difference_scheme(N, T, dt):
             u[i, j] = initial_u(X[i, j], Y[i, j]) + ddt * initial_ut(X[i, j], Y[i, j])
             u_prev[i, j] = initial_u(X[i, j], Y[i, j])
 
-
     # time advancing
     for n in range(Nt - 1):
         for i in range(1, N):
@@ -54,7 +43,6 @@ def central_difference_scheme(N, T, dt):
                                             u[i, j + 1] - 2 * u[i, j] + u[i, j - 1])
         u_prev = u.copy()
         u = u_next.copy()
-
     
     return u
 
@@ -65,8 +53,7 @@ errors = []
 T = 1
 for N in N_values:
     dt = stability_condition(2 * np.pi / N,2)
-    # dt = 0.01
-    u_numerical = central_difference_scheme(N, T, dt)
+    # dt = 0.0001
     dx = 2 * np.pi / N
     dy = 2 * np.pi / N
     X = np.zeros((N + 1, N + 1))
@@ -75,12 +62,15 @@ for N in N_values:
         for j in range(N + 1):
             X[i, j] = i * dx
             Y[i, j] = j * dy
+
+    u_numerical = central_difference_scheme(X, Y, N, T, dt)
     u_exact = exact_solution(X, Y, T)
+    r = u_numerical - u_exact
+    res = np.linalg.norm(r/N, 2)    
+    errors.append(res)
     error = np.max(np.abs(u_exact - u_numerical))
-    errors.append(error)
     print(f"For N = {N}, the max error is {error}")
 
-    # plt.scatter(X, Y, c=np.abs(u_exact - u_numerical), cmap=plt.cm.rainbow, vmin=0.0, vmax=0.08)
     plt.contourf(X, Y, np.abs(u_exact - u_numerical))
     plt.colorbar()
     plt.title(f"Error plot for N = {N}")
